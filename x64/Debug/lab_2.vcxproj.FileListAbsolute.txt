@@ -1,0 +1,2 @@
+C:\HWProjects\Course3\Semester5\AISD\AISD_2\x64\Debug\lab_2.exe
+C:\HWProjects\Course3\Semester5\AISD\AISD_2\x64\Debug\lab_2.pdb

@@ -34,11 +34,11 @@ public:
 		return root;
 	};
 	int getCounter();
-	void clear();
+	void clear(Node** node);
 	bool isEmpty();
 	void del(Node node, T key);
-	Node* search(Node node, T key);
-	T changeRoot();
+	void copy(Node* node);
+	BST_tree<T> changeRoot();
 	void print(Node* root, int a = 100, int x = 50, int y = 0, int c = 0);
 	list<T> createList();
 
@@ -65,6 +65,33 @@ public:
 		}
 		return node;
 	};
+
+	Node* search(Node* node, T key) {
+		if (!node || key == node->key) return node;
+		if (key < node->key) return search(node->left, key);
+		else return search(node->right, key);
+	}
+
+	Node* minimum(Node* node) {
+		if (!node->left) return node;
+		return minimum(node->left);
+	}
+
+	Node* del(Node* node, T key) { // free
+		if (!node) return node;
+		if (key < node->key) node->left = del(node->left, key);
+		else if (key > node->key) node->right = del(node->right, key);
+		else if (node->left && node->right) {
+			node->key = minimum(node->right)->key;
+			node->right = del(node->right, node->key);
+		}
+		else {
+			if (node->left) node = node->left;
+			else if (node->right) node = node->right;
+			else node = nullptr;
+		}
+		return node;
+	}
 
 	class Iterator // внутренний класс - итератор
 	{
@@ -141,8 +168,87 @@ public:
 			return cur->key;
 		}
 		
-		/*bool operator==(const Iterator&); // перегрузка равенства
-		bool operator!=(const Iterator&); // перегрузка неравенства*/
+		bool operator==(const Iterator&); // перегрузка равенства
+		bool operator!=(const Iterator&); // перегрузка неравенства
+	};
+
+	class ReverseIterator // внутренний класс - итератор
+	{
+	private:
+		Node* cur = nullptr;	// текущий индекс
+		BST_tree<T>* tree;
+		int counter = 1;
+	public:
+		ReverseIterator(BST_tree* tree) { // конструктор итератора
+			this->tree = tree;
+		};
+		ReverseIterator rbegin(Node* node) { // установка на последнее значение в массиве
+			if (node->right)
+				rbegin(node->right);
+			else
+				cur = node;
+			counter = tree->counter;
+			return *this;
+		}
+		ReverseIterator rend(Node* node) { // установка на первое значение в массиве
+			if (node->left)
+				rend(node->left);
+			else
+				cur = node;
+			counter = 1;
+			return *this;
+		}
+		ReverseIterator& operator--(int) { // перегрузка перемещения назад
+			if (tree->counter != counter) {
+				if (cur->right) {
+					cur = cur->right;
+					while (cur->left)
+						cur = cur->left;
+				}
+				else {
+					Node* parent = cur->parent;
+					while (cur->key > parent->key) {
+						cur = parent;
+						parent = cur->parent;
+						if (cur == tree->root) break;
+					}
+					cur = cur->parent;
+				}
+				counter++;
+			}
+			else
+				rbegin(tree->root);
+			return *this;
+		};
+
+		ReverseIterator& operator++(int) { // перегрузка перемещения вперёд
+			if (counter != 1) {
+				if (cur->left) {
+					cur = cur->left;
+					while (cur->right)
+						cur = cur->right;
+				}
+				else {
+					Node* parent = cur->parent;
+					while (cur->key < parent->key) {
+						cur = parent;
+						parent = cur->parent;
+						if (cur == tree->root) break;
+					}
+					cur = cur->parent;
+				}
+				counter--;
+			}
+			else
+				rend(tree->root);
+			return *this;
+		};
+		T& operator*() { // перегрузка доступа по чтению/записи
+			return cur->key;
+		}
+
+		bool operator==(const ReverseIterator&); // перегрузка равенства
+		bool operator!=(const ReverseIterator&); // перегрузка неравенства
 	};
 
 protected:
@@ -161,13 +267,41 @@ BST_tree<T>::BST_tree(int size) {
 	srand(time(NULL));
 	for (int i = 0; i < size; i++) {
 		T elem = rand() % 100;
+		Node* temp = search(root, elem);
+		while (temp && temp->key == elem) {
+			elem = rand() % 100;
+		}
 		root = insert(root, elem);
 	}
 }
 
 template<typename T>
-BST_tree<T>::~BST_tree() {
+BST_tree<T>::BST_tree(const BST_tree<T>& other) {
+	BST_tree<T> newTree;
+	newTree.copy(root);
+}
 
+template<typename T>
+BST_tree<T>::~BST_tree() {
+	clear(&root);
+}
+
+template<typename T>
+void BST_tree<T>::copy(Node* node) {
+	if (node) {
+		this->insert(node, node->key);
+		if (node->left) copy(node->left);
+		if (node->right) copy(node->right);
+	}
+}
+
+template<typename T>
+void BST_tree<T>::clear(Node** node) {
+	if (*node) {
+		clear(&((*node)->left));
+		clear(&((*node)->right));
+		free(*node);
+	}
 }
 
 template<typename T>
@@ -183,8 +317,8 @@ bool BST_tree<T>::isEmpty() {
 template<typename T>
 list<T> BST_tree<T>::createList() {
 	list<T> lst;
-	Iterator it(this);
-	it.begin(root);
+	ReverseIterator it(this);
+	it.rbegin(root);
 	for (int i = 0; i++ < counter; it++) {
 		lst.push_back(*it);
 	}
@@ -219,4 +353,42 @@ void BST_tree<T>::print(Node* root, int a, int x, int y,int c) {// c = 0 - корен
 		print(root->left, a, x, y, 1);
 		print(root->right, a, x, y, 2);
 	}
+}
+
+template<typename T>
+BST_tree<T> BST_tree<T>::changeRoot() {
+	BST_tree<T> newTree;
+	Node* newRightNode = root->right;
+	Node* newLeftNode = root->left;
+
+	Node* ttt = newTree.getRoot();
+	if (newRightNode) ttt = newTree.insert(newTree.getRoot(), newRightNode->key);
+	newTree.insert(newTree.getRoot(), root->key);
+	if (newLeftNode) {
+		newTree.insert(newTree.getRoot(), newLeftNode->key);
+		newTree.copy(newLeftNode);
+	}
+	if (newRightNode->left) newTree.copy(newRightNode->left);
+	if (newRightNode->right) newTree.copy(newRightNode->right);
+	return newTree;
+}
+
+template<typename T>
+bool BST_tree<T>::Iterator::operator==(const Iterator& i) {
+	return this.cur == i.cur;
+}
+
+template<typename T>
+bool BST_tree<T>::Iterator::operator!=(const Iterator& i) {
+	return this.cur != i.cur;
+}
+
+template<typename T>
+bool BST_tree<T>::ReverseIterator::operator==(const ReverseIterator& i) {
+	return this.cur == i.cur;
+}
+
+template<typename T>
+bool BST_tree<T>::ReverseIterator::operator!=(const ReverseIterator& i) {
+	return this.cur != i.cur;
 }
