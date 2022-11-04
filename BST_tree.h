@@ -34,7 +34,9 @@ public:
 		return root;
 	};
 	int getCounter();
-	void clear(Node** node);
+	int getPrevNodeCounter();
+	void resetPrevNodeCounter();
+	void clear(Node* node);
 	bool isEmpty();
 	void del(Node node, T key);
 	void copy(Node* node);
@@ -44,12 +46,23 @@ public:
 
 	Node* insert(Node* node, T key) {
 		if (!node) {
-			node = (Node*)malloc(sizeof(Node));
-			node->key = key;
-			node->left = nullptr;
-			node->right = nullptr;
-			counter++;
-			return node;
+			if (counter == 0) {
+				root = (Node*)malloc(sizeof(Node));
+				root->key = key;
+				root->left = nullptr;
+				root->right = nullptr;
+				root->parent = nullptr;
+				counter++;
+				return root;
+			}
+			else {
+				node = (Node*)malloc(sizeof(Node));
+				node->key = key;
+				node->left = nullptr;
+				node->right = nullptr;
+				counter++;
+				return node;
+			}
 		}
 		else {
 			if (key < node->key) {
@@ -63,21 +76,25 @@ public:
 				right->parent = node;
 			}
 		}
+		prevNodeCounter++;
 		return node;
-	};
+	}
 
 	Node* search(Node* node, T key) {
+		prevNodeCounter++;
 		if (!node || key == node->key) return node;
 		if (key < node->key) return search(node->left, key);
 		else return search(node->right, key);
 	}
 
 	Node* minimum(Node* node) {
+		prevNodeCounter++;
 		if (!node->left) return node;
 		return minimum(node->left);
 	}
 
-	Node* del(Node* node, T key) { // free
+	Node* del(Node* node, T key) {
+		prevNodeCounter++;
 		if (!node) return node;
 		if (key < node->key) node->left = del(node->left, key);
 		else if (key > node->key) node->right = del(node->right, key);
@@ -88,7 +105,10 @@ public:
 		else {
 			if (node->left) node = node->left;
 			else if (node->right) node = node->right;
-			else node = nullptr;
+			else {
+				free(node);
+				node = nullptr;
+			}
 		}
 		return node;
 	}
@@ -252,6 +272,7 @@ public:
 	};
 
 protected:
+	int prevNodeCounter = 0;
 	int counter = 0;
 	Node* root = nullptr;
 };
@@ -277,30 +298,35 @@ BST_tree<T>::BST_tree(int size) {
 
 template<typename T>
 BST_tree<T>::BST_tree(const BST_tree<T>& other) {
-	BST_tree<T> newTree;
-	newTree.copy(root);
+	copy(other.root);
+	this->prevNodeCounter = other.prevNodeCounter;
 }
 
 template<typename T>
 BST_tree<T>::~BST_tree() {
-	clear(&root);
+	clear(root);
 }
 
 template<typename T>
 void BST_tree<T>::copy(Node* node) {
 	if (node) {
-		this->insert(node, node->key);
+		prevNodeCounter++;
+		insert(this->root, node->key);
 		if (node->left) copy(node->left);
 		if (node->right) copy(node->right);
 	}
 }
 
 template<typename T>
-void BST_tree<T>::clear(Node** node) {
-	if (*node) {
-		clear(&((*node)->left));
-		clear(&((*node)->right));
-		free(*node);
+void BST_tree<T>::clear(Node* node) {
+	if (node) {
+		prevNodeCounter++;
+		clear(node->left);
+		clear(node->right);
+		free(node);
+		node = nullptr;
+		counter--;
+		if (counter == 0) root = nullptr;
 	}
 }
 
@@ -315,32 +341,37 @@ bool BST_tree<T>::isEmpty() {
 }
 
 template<typename T>
+int BST_tree<T>::getPrevNodeCounter() {
+	return prevNodeCounter;
+}
+
+template<typename T>
+void BST_tree<T>::resetPrevNodeCounter() {
+	prevNodeCounter = 0;
+}
+
+template<typename T>
 list<T> BST_tree<T>::createList() {
 	list<T> lst;
 	ReverseIterator it(this);
 	it.rbegin(root);
 	for (int i = 0; i++ < counter; it++) {
+		prevNodeCounter++;
 		lst.push_back(*it);
 	}
 	return lst;
 }
 
 template<typename T>
-void BST_tree<T>::print(Node* root, int a, int x, int y,int c) {// c = 0 - корень, c = 1 - левый, c = 2 - правый
-	if (root)
-	{
-		if (a > 0 && c != 0)
-		{
-			if (c == 1)
-				x -= 10;
-			else
-				x += 10;
+void BST_tree<T>::print(Node* root, int a, int x, int y, int c) {// c = 0 - корень, c = 1 - левый, c = 2 - правый
+	if (root) {
+		if (a > 0 && c != 0) {
+			if (c == 1) x -= 10;
+			else x += 10;
 		}
 		else if (c != 0)
-			if (c == 1)
-				x -= 4;
-			else
-				x += 4;
+			if (c == 1) x -= 4;
+			else x += 4;
 
 		GoToXY(x, y++);
 		if (c == 1) printf("      /");
@@ -348,6 +379,7 @@ void BST_tree<T>::print(Node* root, int a, int x, int y,int c) {// c = 0 - корен
 
 		GoToXY(x, y++);
 		printf("%5d", root->key);
+		prevNodeCounter++;
 
 		a--;
 		print(root->left, a, x, y, 1);
@@ -361,8 +393,7 @@ BST_tree<T> BST_tree<T>::changeRoot() {
 	Node* newRightNode = root->right;
 	Node* newLeftNode = root->left;
 
-	Node* ttt = newTree.getRoot();
-	if (newRightNode) ttt = newTree.insert(newTree.getRoot(), newRightNode->key);
+	if (newRightNode) newTree.insert(newTree.getRoot(), newRightNode->key);
 	newTree.insert(newTree.getRoot(), root->key);
 	if (newLeftNode) {
 		newTree.insert(newTree.getRoot(), newLeftNode->key);

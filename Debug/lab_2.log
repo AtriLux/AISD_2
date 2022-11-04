@@ -1,8 +1,8 @@
 ﻿  lab_2.cpp
 C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(13,18): warning C4838: Преобразование из "int" в "SHORT" требует сужающего преобразования.
 C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(13,21): warning C4838: Преобразование из "int" в "SHORT" требует сужающего преобразования.
-C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(161,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(160): message : во время компиляции функции-члена класс шаблон "BST_tree<int>::BST_tree(int)"
+C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(288,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\BST_tree.h(287): message : во время компиляции функции-члена класс шаблон "BST_tree<int>::BST_tree(int)"
 C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\lab_2.cpp(7): message : выполняется компиляция ссылки на экземпляр шаблон функции "BST_tree<int>::BST_tree(int)"
 C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\lab_2.cpp(7): message : выполняется компиляция ссылки на экземпляр класс шаблон функции "BST_tree<int>"
   lab_2.vcxproj -> C:\Users\mariy\Desktop\5сем\АиСД\lab_2\code\Debug\lab_2.exe
