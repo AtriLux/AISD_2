@@ -113,6 +113,8 @@ public:
 		return node;
 	}
 
+	BST_tree<T>& operator=(const BST_tree<T>& other);
+
 	class Iterator // внутренний класс - итератор
 	{
 	private:
@@ -298,8 +300,8 @@ BST_tree<T>::BST_tree(int size) {
 
 template<typename T>
 BST_tree<T>::BST_tree(const BST_tree<T>& other) {
+	prevNodeCounter = other.prevNodeCounter;
 	copy(other.root);
-	this->prevNodeCounter = other.prevNodeCounter;
 }
 
 template<typename T>
@@ -310,7 +312,6 @@ BST_tree<T>::~BST_tree() {
 template<typename T>
 void BST_tree<T>::copy(Node* node) {
 	if (node) {
-		prevNodeCounter++;
 		insert(this->root, node->key);
 		if (node->left) copy(node->left);
 		if (node->right) copy(node->right);
@@ -402,6 +403,14 @@ BST_tree<T> BST_tree<T>::changeRoot() {
 	if (newRightNode->left) newTree.copy(newRightNode->left);
 	if (newRightNode->right) newTree.copy(newRightNode->right);
 	return newTree;
+}
+
+template<typename T>
+BST_tree<T>& BST_tree<T>::operator=(const BST_tree<T>& other) {
+	clear(root);
+	copy(other.root);
+	prevNodeCounter = other.prevNodeCounter;
+	return *this;
 }
 
 template<typename T>
